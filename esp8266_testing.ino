@@ -6,64 +6,48 @@ const char* password = "yourpassword";
 const char* timeHost = "time.nist.gov";
 const char* dataHost = "data.sparkfun.com";
 
+
 void setup() {
   Serial.begin(115200);
-  delay(100);
- 
-  // We start by connecting to a WiFi network
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-  
   WiFi.begin(ssid, password);
-  
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
- 
-  Serial.println("");
-  Serial.println("WiFi connected");  
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println("");
 }
- 
-void loop() {
-  Serial.print("connecting to ");
-  Serial.println(timeHost);
-  
+
+String UtcDateTime()
+{
   // Use WiFiClient class to create TCP connections
   WiFiClient client;
   const int timePort = 13;
-  const int dataPort = 80;
 
   if (!client.connect(timeHost, timePort)) {
-    Serial.println("connection failed");
-    return;
+    return "Connection to NIST failed";
   }  
   
   // Send the request to the server
   client.print("HEAD / HTTP/1.1\r\nAccept: */*\r\nUser-Agent: Mozilla/4.0 (compatible; ESP8266 NodeMCU Lua;)\r\n\r\n");
   delay(100);
+  String dateTime = "";
 
-  // Read all the lines of the reply from server and print them to Serial
+  // Read all the lines of the reply from server
   // expected line is like : Date: Thu, 01 Jan 2015 22:00:14 GMT
-  while(client.available()){
+  while(client.available()) {
     String line = client.readStringUntil('\r');
     if (line.indexOf("UTC(NIST)") == -1)
     {
-      Serial.println("Unexpected response from NIST");
+      dateTime = "Unexpected response from NIST";
     }
     else
     {
       // date starts at pos 7
-      String dateTime = line.substring(7, 24) + " UTC";
-      Serial.println(dateTime);
+      dateTime = line.substring(7, 24) + " UTC";
     }
   }
-  
-  Serial.println();
-  Serial.println("closing connection");
+
+  return dateTime;
+}
+
+void loop() {
+  String dateTime = UtcDateTime();
+  Serial.println(dateTime);
 
   delay(60000);
 }
