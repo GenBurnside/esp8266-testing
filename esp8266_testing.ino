@@ -3,7 +3,6 @@
 const char* ssid     = "SSID";
 const char* password = "PASSWORD";
 
-const char* timeHost = "time.nist.gov";
 const char* dataHost = "data.sparkfun.com";
 
 //https://data.sparkfun.com/streams/PUBLICKEY
@@ -15,40 +14,7 @@ void setup() {
   WiFi.begin(ssid, password);
 }
 
-String UtcDateTime()
-{
-  // Use WiFiClient class to create TCP connections
-  WiFiClient client;
-  const int timePort = 13;
-
-  if (!client.connect(timeHost, timePort)) {
-    return "Connection to NIST failed";
-  }
-  
-  // Send the request to the server
-  client.print("HEAD / HTTP/1.1\r\nAccept: */*\r\nUser-Agent: Mozilla/4.0 (compatible; ESP8266 NodeMCU Lua;)\r\n\r\n");
-  delay(100);
-  String dateTime = "";
-
-  // Read all the lines of the reply from server
-  // expected line is like : Date: Thu, 01 Jan 2015 22:00:14 GMT
-  while(client.available()) {
-    String line = client.readStringUntil('\r');
-    if (line.indexOf("UTC(NIST)") == -1)
-    {
-      dateTime = "Unexpected response from NIST";
-    }
-    else
-    {
-      // date starts at pos 7
-      dateTime = line.substring(7, 24) + " UTC";
-    }
-  }
-
-  return dateTime;
-}
-
-void PostToDataStream(String dateTime, int temperature, int humidity, String light)
+void PostToDataStream(int temperature, int humidity, String light)
 {
   // Use WiFiClient class to create TCP connections
   WiFiClient client;
@@ -59,8 +25,7 @@ void PostToDataStream(String dateTime, int temperature, int humidity, String lig
 
   String url = "/input/" + String(dataPubKey);
 
-  String body = "datetime=" + dateTime +
-                "&temperature=" + String(temperature) + "%C2%B0%20F" +
+  String body = "temperature=" + String(temperature) + "%C2%B0%20F" +
                 "&humidity=" + String(humidity) + "%25" + 
                 "&light=" + light;  
   
@@ -87,18 +52,15 @@ void PostToDataStream(String dateTime, int temperature, int humidity, String lig
 }
 
 void loop() {
-  String dateTime = UtcDateTime();
-  dateTime.replace(" ", "%20");
-  Serial.println(dateTime);
-
   int temperature = random(30, 101);
+  
   int humidity = random(0, 101);
 
   String lightLevels[] = { "low", "medium", "high" };
   int index = random(3);
   String light = lightLevels[index];
 
-  PostToDataStream(dateTime, temperature, humidity, light);
+  PostToDataStream(temperature, humidity, light);
   
-  delay(10000);
+  delay(60000);
 }
