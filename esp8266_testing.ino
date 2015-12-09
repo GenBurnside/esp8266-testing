@@ -36,9 +36,10 @@ void PostToDataStream(String temperature, String humidity, String light)
                     "Content-Length: " + String(body.length()) + "\r\n" + 
                     "Phant-Private-Key: " + dataPrivKey +
                     "\r\n\r\n" + body;
-  
+
   Serial.println(request);
   Serial.println("");
+
   
   // Send the request to the server
   client.print(request);
@@ -51,6 +52,27 @@ void PostToDataStream(String temperature, String humidity, String light)
   }
 }
 
+float GetTemperature()
+{
+  int reading = analogRead(A0);
+
+  // convert reading to voltage, for 3.3v arduino use 3.3
+  float voltage = reading * 3.3;
+  voltage /= 1024.0;
+
+  Serial.print(voltage); Serial.println(" volts");
+
+  float temperatureC = (voltage - 0.5) * 100;
+
+  Serial.print(temperatureC); Serial.println(" degrees C");
+
+  float temperatureF = (temperatureC * 9.0 / 5.0) + 32.0;
+  Serial.print(temperatureF); Serial.println(" degrees F");
+
+  temperatureF += 0.5; //for rounding to int
+  return (int)temperatureF;
+}
+
 String FormatTemperature(int input)
 {
   String output = String(input) + "%C2%B0%20F";
@@ -60,23 +82,21 @@ String FormatTemperature(int input)
 String FormatHumidity(int input)
 {
   String output = String(input) + "%25";
-  return output;
+  return "-";
 }
 
 String FormatLight(int input)
 {
   String lightLevels[] = { "low", "medium", "high" };
-  return lightLevels[input];
+  return "-";
 }
 
 void loop() {
-  int tVal = random(30, 101);
-  int hVal = random(0, 101);
-  int lVal = random(3);
+  int tVal = GetTemperature();
 
   String temperature = FormatTemperature(tVal);
-  String humidity = FormatHumidity(hVal);
-  String light = FormatLight(lVal);
+  String humidity = FormatHumidity(0);
+  String light = FormatLight(0);
 
   PostToDataStream(temperature, humidity, light);
   
