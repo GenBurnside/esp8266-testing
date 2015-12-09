@@ -14,7 +14,7 @@ void setup() {
   WiFi.begin(ssid, password);
 }
 
-void PostToDataStream(int temperature, int humidity, String light)
+void PostToDataStream(String temperature, String humidity, String light)
 {
   // Use WiFiClient class to create TCP connections
   WiFiClient client;
@@ -25,9 +25,9 @@ void PostToDataStream(int temperature, int humidity, String light)
 
   String url = "/input/" + String(dataPubKey);
 
-  String body = "temperature=" + String(temperature) + "%C2%B0%20F" +
-                "&humidity=" + String(humidity) + "%25" + 
-                "&light=" + light;  
+  String body = "temperature=" + temperature +
+                "&humidity=" + humidity +
+                "&light=" + light;
   
   String request  = "POST " + url + " HTTP/1.1\r\n" +
                     "Host: " + dataHost + "\r\n" + 
@@ -51,14 +51,32 @@ void PostToDataStream(int temperature, int humidity, String light)
   }
 }
 
-void loop() {
-  int temperature = random(30, 101);
-  
-  int humidity = random(0, 101);
+String FormatTemperature(int input)
+{
+  String output = String(input) + "%C2%B0%20F";
+  return output;
+}
 
+String FormatHumidity(int input)
+{
+  String output = String(input) + "%25";
+  return output;
+}
+
+String FormatLight(int input)
+{
   String lightLevels[] = { "low", "medium", "high" };
-  int index = random(3);
-  String light = lightLevels[index];
+  return lightLevels[input];
+}
+
+void loop() {
+  int tVal = random(30, 101);
+  int hVal = random(0, 101);
+  int lVal = random(3);
+
+  String temperature = FormatTemperature(tVal);
+  String humidity = FormatHumidity(hVal);
+  String light = FormatLight(lVal);
 
   PostToDataStream(temperature, humidity, light);
   
