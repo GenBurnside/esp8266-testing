@@ -10,7 +10,6 @@ const char* dataPubKey  = "PUBLICKEY";
 const char* dataPrivKey = "PRIVATEKEY";
 
 void setup() {
-  Serial.begin(115200);
   WiFi.begin(ssid, password);
 }
 
@@ -19,7 +18,6 @@ void PostToDataStream(String temperature, String humidity, String light)
   // Use WiFiClient class to create TCP connections
   WiFiClient client;
   if (!client.connect(dataHost, 80)) {
-    Serial.println("Connection to SparkFun failed");
     return;
   }
 
@@ -37,19 +35,9 @@ void PostToDataStream(String temperature, String humidity, String light)
                     "Phant-Private-Key: " + dataPrivKey +
                     "\r\n\r\n" + body;
 
-  Serial.println(request);
-  Serial.println("");
-
-  
   // Send the request to the server
   client.print(request);
-
   delay(500);
-  
-  while(client.available()){
-    String line = client.readStringUntil('\r');
-    Serial.print(line);
-  }
 }
 
 float GetTemperature()
@@ -60,14 +48,8 @@ float GetTemperature()
   float voltage = reading * 3.3;
   voltage /= 1024.0;
 
-  Serial.print(voltage); Serial.println(" volts");
-
   float temperatureC = (voltage - 0.5) * 100;
-
-  Serial.print(temperatureC); Serial.println(" degrees C");
-
   float temperatureF = (temperatureC * 9.0 / 5.0) + 32.0;
-  Serial.print(temperatureF); Serial.println(" degrees F");
 
   temperatureF += 0.5; //for rounding to int
   return (int)temperatureF;
